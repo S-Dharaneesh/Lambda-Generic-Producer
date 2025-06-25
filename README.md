@@ -1,9 +1,6 @@
 
 # Lambda Generic Producer
 
-## 📌 Project Title
-**Lambda Generic Producer**
-
 ## 🧾 Description
 
 The Lambda Generic Producer is an AWS Lambda-based API that processes incoming order data via HTTP POST requests, validates and transforms it, and publishes the result to a downstream endpoint. The service is designed for seamless integration with webhook-based consumers and is structured for scalability and maintainability.
