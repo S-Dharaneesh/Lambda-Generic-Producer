@@ -2,17 +2,20 @@ export class AppError extends Error {
     public readonly statusCode: number;
     public readonly isOperational: boolean;
     public readonly errorCode: string;
+    public readonly errors?: string[];
 
     constructor(
         message: string,
         statusCode = 500,
         errorCode = 'INTERNAL_ERROR',
-        isOperational = true
+        isOperational = true,
+        errors?: string[]
     ) {
         super(message);
         this.statusCode = statusCode;
         this.errorCode = errorCode;
         this.isOperational = isOperational;
+        this.errors = errors;
 
         Error.captureStackTrace(this, this.constructor);
         Object.setPrototypeOf(this, AppError.prototype);
@@ -30,7 +33,8 @@ export const handleError = (error: Error | AppError): {statusCode: number; body:
                 error: true,
                 message: error.message,
                 code: error.errorCode,
-                isOperational: error.isOperational
+                isOperational: error.isOperational,
+                errors: error.errors
             })
         };
     }

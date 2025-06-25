@@ -30,7 +30,7 @@ export const LambdaHandler: APIGatewayProxyHandler = async (event, context: Cont
             const validation = isValidRecord(body);
             if (!validation.valid) {
                 console.warn('Validation failed', { errors: validation.errors });
-                throw new AppError('Invalid record format', 400, 'ValidationError');
+                throw new AppError('Invalid record format', 400, 'ValidationError', true, validation.errors);
             }
 
             const transformed = transformRecord(body);

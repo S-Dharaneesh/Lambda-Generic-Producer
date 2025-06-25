@@ -10,33 +10,22 @@ export const publishToWebsite = async (record: TargetOrderModel): Promise<string
         );
     }
 
-    try {
-        console.info('Publishing to webhook', { orderId: record.order.id });
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(record)
-        });
+    console.info('Publishing to webhook', { orderId: record.order.id });
+    const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(record)
+    });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Webhook responded with error', { status: response.status, errorText });
-            throw new AppError(
-                `Webhook responded with status ${response.status}`, response.status, 'WEBHOOK_RESPONSE_ERROR', true
-            );
-        }
-        console.info('Webhook publish successful', { status: response.status, orderId: record.order.id });
-        return response.statusText;
-    } 
-    catch (err: any) {
-        console.error('Failed to publish to webhook', { error: err?.message, orderId: record.order.id });
-        if (err instanceof AppError) {
-            throw err;
-        }
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Webhook responded with error', { status: response.status, errorText });
         throw new AppError(
-            'Failed to publish to webhook', 502, err?.message || 'UNKNOWN_PUBLISH_ERROR'
+            `Webhook responded with status ${response.status}`, response.status, 'WEBHOOK_RESPONSE_ERROR', true
         );
     }
+    console.info('Webhook publish successful', { status: response.status, orderId: record.order.id });
+    return response.statusText;
 }
