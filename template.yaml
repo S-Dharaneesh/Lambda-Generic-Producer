@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 3
+    LoggingConfig:
+      LogFormat: JSON
+  
+Resources:
+  ProducerLambdaFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: dist
+      Handler: app.LambdaHandler
+      Runtime: nodejs18.x
+      Description: 'Producer Lambda Function'
+      Architectures:
+      - x86_64
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /process/order/v1
+            Method: post
+        HealthCheckApi:
+          Type: Api
+          Properties:
+            Path: /process/order/v1/healthCheck
+            Method: get
+      Environment:
+        Variables:
+          WEBHOOK_URL: "https://webhook.site/your-unique-id"
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+      
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+
+Outputs:
+  ProducerLambdaApi:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/order-service/order-producer/v1"
+
+  ProducerLambdaFunction:
+    Description: Producer Lambda Function ARN
+    Value: !GetAtt ProducerLambdaFunction.Arn
+
+  ProducerLambdaFunctionIamRole:
+    Description: Implicit IAM Role created for the Lambda function
+    Value: !GetAtt ProducerLambdaFunctionRole.Arn
