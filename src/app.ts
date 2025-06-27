@@ -1,9 +1,7 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import { publishToWebsite } from "./services/publisher";
-import { transformRecord } from "./services/transformer";
-import { AppError, handleError } from "./utils/errorHandler";
-import { isValidRecord } from "./utils/validator";
 import { Context } from 'aws-lambda';
+import { healthCheckHandler } from './routes/healthCheck';
+import { orderHandler } from './routes/order';
 
 export const LambdaHandler: APIGatewayProxyHandler = async (event, context: Context) => {
     const path = event.path || '';
@@ -16,42 +14,24 @@ export const LambdaHandler: APIGatewayProxyHandler = async (event, context: Cont
     });
 
     if (path.endsWith('/healthCheck')) {
-        console.info('Health check endpoint hit');
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() })
-        };
-    }
-
-    else if (path.endsWith('/v1')) {
-        try {
-            const body = JSON.parse(event.body || '{}')
-
-            const validation = isValidRecord(body);
-            if (!validation.valid) {
-                console.warn('Validation failed', { errors: validation.errors });
-                throw new AppError('Invalid record format', 400, 'ValidationError', true, validation.errors);
-            }
-
-            const transformed = transformRecord(body);
-            console.info('Record transformed successfully', { orderId: transformed.order.id });
-
-            const result = await publishToWebsite(transformed);
-            console.info('Record published successfully', { status: result });
-
+        if (event.httpMethod !== 'GET') {
             return {
-                statusCode: 200,
-                body: JSON.stringify({ message: 'Success', result })
-            }
+                statusCode: 405,
+                body: JSON.stringify({ error: true, message: 'Method Not Allowed. Use GET for healthCheck.' })
+            };
         }
-        catch (error) {
-            console.error('Error processing request', { 
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
-            return handleError(error as Error | AppError);
-        }
+        console.info('Health check endpoint hit');
+        return healthCheckHandler();
     }
-
+    else if (path.endsWith('/v1')) {
+        if (event.httpMethod !== 'POST') {
+            return {
+                statusCode: 405,
+                body: JSON.stringify({ error: true, message: 'Method Not Allowed. Use POST for this endpoint.' })
+            };
+        }
+        return orderHandler(event);
+    }
     else {
         console.warn('Invalid path accessed', { path });
         return {
