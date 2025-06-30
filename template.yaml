@@ -28,9 +28,14 @@ Resources:
           Properties:
             Path: /process/order/v1/healthCheck
             Method: get
+        ProxyApi:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: any
       Environment:
         Variables:
-          WEBHOOK_URL: "https://webhook.site/your-unique-id"
+          WEBHOOK_URL: "https://webhook.site/your-webhook-url"
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
